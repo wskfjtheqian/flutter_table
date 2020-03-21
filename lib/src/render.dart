@@ -127,6 +127,8 @@ class HTableRender extends RenderBox {
         _getHeight(data.y, data.rowspan),
       );
 
+      data.offset = data._darwRect.topLeft;
+
       item.layout(
         BoxConstraints.tightFor(
           width: data._darwRect.width,
@@ -165,7 +167,7 @@ class HTableRender extends RenderBox {
   void attach(PipelineOwner owner) {
     super.attach(owner);
     for (final item in _children) {
-      item.attach(owner);
+      item?.attach(owner);
     }
   }
 
@@ -173,7 +175,7 @@ class HTableRender extends RenderBox {
   void detach() {
     super.detach();
     for (final item in _children) {
-      item.detach();
+      item?.detach();
     }
   }
 

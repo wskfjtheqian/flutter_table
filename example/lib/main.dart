@@ -26,49 +26,90 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  int _aaa = 0;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         padding: EdgeInsets.all(20.0),
-        child: HTable(
-          border: BorderSide(color: Color(0xff808080), width: 0.3),
-          columnWidths: {
-            0: HFixedColumnWidth(50),
-          },
-          rowCount: 3,
-          colCount: 3,
-          children: [
-            HTableRow(
-              children: [
-                HTableCell(colspan: 2, child: Text("1")),
-                HTableCell(child: Text("2")),
-              ],
-            ),
-            HTableRow(
-              children: [
-                HTableCell(child: Text("4")),
-                HTableCell(child: Text("5"), rowspan: 2),
-              ],
-            ),
-            HTableRow(
-              children: [
-                HTableCell(child: Text("6")),
-                HTableCell(
-                  rowspan: 2,
-                  child: Container(
-                    margin: EdgeInsets.all(0.5),
-                    color: Colors.deepPurpleAccent,
-                    child: Center(
-                      child: Text("7"),
-                    ),
+        child: Column(
+          children: <Widget>[
+            Expanded(
+              child: HTable(
+                border: BorderSide(color: Color(0xff808080), width: 0.3),
+                columnWidths: {
+                  0: HFixedColumnWidth(50),
+                },
+                rowCount: 3,
+                colCount: 3,
+                children: [
+                  HTableRow(
+                    children: [
+                      HTableCell(colspan: 2, child: Text("1")),
+                      HTableCell(child: Text("2")),
+                    ],
                   ),
-                ),
-              ],
+                  HTableRow(
+                    children: [
+                      HTableCell(
+                        child: Container(
+                          margin: EdgeInsets.all(0.5),
+                          color: Colors.deepPurpleAccent,
+                          child: Center(
+                            child: Text("4"),
+                          ),
+                        ),
+                      ),
+                      HTableCell(child: Text("5"), rowspan: 2),
+                    ],
+                  ),
+                  HTableRow(
+                    children: [
+                      HTableCell(child: Text("6")),
+                      HTableCell(
+                        rowspan: 2,
+                        child: Container(
+                          margin: EdgeInsets.all(0.5),
+                          color: Colors.deepPurpleAccent,
+                          child: InkWell(
+                            child: Center(
+                              child: Text("${_aaa}"),
+                            ),
+                            onTap: () {
+                              setState(() {
+                                _aaa++;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
+            _build(context),
           ],
         ),
       ),
+    );
+  }
+
+  _build(BuildContext context) {
+    return Table(
+      children: [
+        TableRow(children: [
+          InkWell(
+            child: Text("data"),
+            onTap: () {
+              setState(() {
+                _aaa++;
+              });
+            },
+          )
+        ])
+      ],
     );
   }
 }
