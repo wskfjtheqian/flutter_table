@@ -105,18 +105,19 @@ class _HTableElement extends RenderObjectElement {
   @override
   void mount(Element parent, newSlot) {
     super.mount(parent, newSlot);
-    _stor(widget);
+    _children = _stor(widget);
   }
 
-  void _stor(HTable htable) {
-    var ys = List<int>.generate(htable.rowCount, (index) => 0);
-    for (int y = 0; y < htable.colCount; ++y) {
+  List<_HTableData> _stor(HTable htable) {
+    List<_HTableData> children = [];
+    var ys = List<int>.generate(htable.colCount, (index) => 0);
+    for (int y = 0; y < htable.rowCount; y++) {
       var rows = htable.children[y];
       int xs = 0;
-      for (int x = 0; x < htable.rowCount; ++x) {
+      for (int x = 0; x < htable.colCount; ++x) {
         if (y >= ys[x] && xs < rows.children.length) {
           var cell = rows.children[xs];
-          _children.add(
+          children.add(
             _HTableData(
               x: x,
               y: y < ys[x] ? ys[x] : y,
@@ -132,6 +133,7 @@ class _HTableElement extends RenderObjectElement {
         }
       }
     }
+    return children;
   }
 
   @override
@@ -150,7 +152,7 @@ class _HTableElement extends RenderObjectElement {
 
   @override
   void update(RenderObjectWidget newWidget) {
-    _stor(newWidget);
+    _children= _stor(newWidget);
 
     renderObject.children = _children.map<RenderBox>((e) {
       return (e.element.renderObject)

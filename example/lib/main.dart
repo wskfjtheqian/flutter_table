@@ -60,7 +60,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     margin: EdgeInsets.all(0.5),
                     color: Colors.deepPurpleAccent,
                     child: Center(
-                      child: Text("10"),
+                      child: Text("7"),
                     ),
                   ),
                 ),

@@ -118,7 +118,6 @@ class HTableRender extends RenderBox {
   @override
   void performLayout() {
     _computeColumnWidths(constraints);
-    double _borderWidth = BorderStyle.solid == _border.style ? _border.width : 0;
     for (var item in _children) {
       var data = (item.parentData as HTableRenderData);
       data._darwRect = Rect.fromLTWH(
