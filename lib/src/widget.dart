@@ -185,7 +185,6 @@ class HTableCell extends SingleChildRenderObjectWidget {
 
   @override
   RenderObject createRenderObject(BuildContext context) {
-    Table
     return RenderHTableCellBox(
       colspan: colspan,
       rowspan: rowspan,
