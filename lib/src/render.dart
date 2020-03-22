@@ -1,22 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
-
-class HTableRenderData extends BoxParentData {
-  final int x;
-  final int y;
-  final int rowspan;
-  final int colspan;
-
-  Rect _darwRect;
-
-  HTableRenderData({
-    this.x,
-    this.y,
-    this.rowspan,
-    this.colspan,
-  });
-}
 
 class HTableColumnWidth {
   const HTableColumnWidth();
@@ -34,24 +18,37 @@ class HFixedColumnWidth extends HTableColumnWidth {
   const HFixedColumnWidth(this.value);
 }
 
-class HTableRender extends RenderBox {
-  List<RenderBox> _children = [];
-  List<double> _rowHeights;
-  int _colCount;
-  int _rowCount;
-  Map<int, HTableColumnWidth> _columnWidths;
-  HTableColumnWidth _defaultColumnWidth;
-  BorderSide _border;
-  List<double> _colWidths = [];
+class HTableRenderData extends BoxParentData {
+  final int x;
+  final int y;
+  final int rowspan;
+  final int colspan;
 
-  HTableRender({
+  Rect _darwRect;
+
+  HTableRenderData({
+    this.x,
+    this.y,
+    this.rowspan,
+    this.colspan,
+  });
+}
+
+class RenderHTableBox extends RenderBox {
+  RenderHTableBox({
+    ImageConfiguration configuration = ImageConfiguration.empty,
+    RenderBox child,
     List<double> rowHeights,
     int colCount,
     int rowCount,
     Map<int, HTableColumnWidth> columnWidths,
     HTableColumnWidth defaultColumnWidth,
     BorderSide border,
-  }) {
+  }) : assert(configuration != null) {
+    if (null != child) {
+      this._children.add(child);
+    }
+    _configuration = configuration;
     _rowHeights = rowHeights;
     _colCount = colCount;
     _rowCount = rowCount;
@@ -60,25 +57,47 @@ class HTableRender extends RenderBox {
     _border = border;
   }
 
+  ImageConfiguration get configuration => _configuration;
+  ImageConfiguration _configuration;
+
+  set configuration(ImageConfiguration value) {
+    assert(value != null);
+    if (value == _configuration) return;
+    _configuration = value;
+    markNeedsPaint();
+  }
+
+  List<double> _colWidths = [];
+
+  int _colCount;
+
   set rowCount(int value) {
     _rowCount = value;
     markNeedsLayout();
   }
+
+  Map<int, HTableColumnWidth> _columnWidths;
 
   set columnWidths(Map<int, HTableColumnWidth> value) {
     _columnWidths = value ?? {};
     markNeedsLayout();
   }
 
+  HTableColumnWidth _defaultColumnWidth;
+
   set defaultColumnWidth(HTableColumnWidth value) {
     _defaultColumnWidth = value;
     markNeedsLayout();
   }
 
+  List<double> _rowHeights;
+
   set rowHeights(List<double> value) {
     _rowHeights = value;
     markNeedsLayout();
   }
+
+  int _rowCount;
 
   set colCount(int value) {
     _colCount = value;
@@ -90,6 +109,8 @@ class HTableRender extends RenderBox {
     markNeedsLayout();
   }
 
+  BorderSide _border;
+
   set border(BorderSide value) {
     if (_border == value) return;
     _border = value;
@@ -97,7 +118,80 @@ class HTableRender extends RenderBox {
   }
 
   @override
-  bool hitTestSelf(Offset position) => true;
+  bool hitTestSelf(Offset position) {
+    return true;
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    assert(size.width != null);
+    assert(size.height != null);
+    final ImageConfiguration filledConfiguration = configuration.copyWith(size: size);
+
+    try {
+      for (var item in _children) {
+        context.paintChild(item, offset + (item.parentData as HTableRenderData)._darwRect.topLeft);
+      }
+      double _borderWidth = BorderStyle.solid == _border.style ? _border.width : 0;
+      if (0 < _borderWidth) {
+        Paint paint = Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = _border.width
+          ..color = _border.color ?? Color(0xfff0f0f0);
+        for (var item in _children) {
+          context.canvas.drawRect((item.parentData as HTableRenderData)._darwRect.shift(offset), paint);
+        }
+        context.canvas.drawRect(offset & size, paint);
+      }
+    } catch (e) {}
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties.add(DiagnosticsProperty<ImageConfiguration>('configuration', configuration));
+  }
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////
+  @override
+  void setupParentData(RenderObject child) {
+    if (child.parentData is! HTableRenderData) child.parentData = HTableRenderData();
+  }
+
+  @override
+  double computeMinIntrinsicWidth(double height) {
+//    if (child != null) return child.getMinIntrinsicWidth(height);
+//    return 0.0;
+  }
+
+  @override
+  double computeMaxIntrinsicWidth(double height) {
+//    if (child != null) return child.getMaxIntrinsicWidth(height);
+//    return 0.0;
+  }
+
+  @override
+  double computeMinIntrinsicHeight(double width) {
+//    if (child != null) return child.getMinIntrinsicHeight(width);
+//    return 0.0;
+  }
+
+  @override
+  double computeMaxIntrinsicHeight(double width) {
+//    if (child != null) return child.getMaxIntrinsicHeight(width);
+//    return 0.0;
+  }
+
+  @override
+  double computeDistanceToActualBaseline(TextBaseline baseline) {
+    if (_children != null) {
+      for (var child in _children) {
+        child.getDistanceToActualBaseline(baseline);
+      }
+    } else {
+      return super.computeDistanceToActualBaseline(baseline);
+    }
+  }
 
   double _getHeight(int start, int rowspan) {
     double height = 0;
@@ -113,90 +207,6 @@ class HTableRender extends RenderBox {
       height += _colWidths[i];
     }
     return height;
-  }
-
-  @override
-  void performLayout() {
-    _computeColumnWidths(constraints);
-    for (var item in _children) {
-      var data = (item.parentData as HTableRenderData);
-      data._darwRect = Rect.fromLTWH(
-        _getWidth(0, data.x),
-        _getHeight(0, data.y),
-        _getWidth(data.x, data.colspan),
-        _getHeight(data.y, data.rowspan),
-      );
-
-      data.offset = data._darwRect.topLeft;
-
-      item.layout(
-        BoxConstraints.tightFor(
-          width: data._darwRect.width,
-          height: data._darwRect.height,
-        ),
-        parentUsesSize: true,
-      );
-    }
-  }
-
-  @override
-  bool get sizedByParent => true;
-
-  @override
-  void performResize() {
-    super.performResize();
-    size = constraints.biggest;
-  }
-
-  @override
-  void markNeedsLayout() {
-    super.markNeedsLayout();
-    for (var item in _children) {
-      item.markNeedsLayout();
-    }
-  }
-
-  @override
-  void visitChildren(RenderObjectVisitor visitor) {
-    for (final item in _children) {
-      visitor(item);
-    }
-  }
-
-  @override
-  void attach(PipelineOwner owner) {
-    super.attach(owner);
-    for (final item in _children) {
-      item?.attach(owner);
-    }
-  }
-
-  @override
-  void detach() {
-    super.detach();
-    for (final item in _children) {
-      item?.detach();
-    }
-  }
-
-  @override
-  void paint(PaintingContext context, Offset offset) {
-    try {
-      for (var item in _children) {
-        context.paintChild(item, offset + (item.parentData as HTableRenderData)._darwRect.topLeft);
-      }
-      double _borderWidth = BorderStyle.solid == _border.style ? _border.width : 0;
-      if (0 < _borderWidth) {
-        Paint paint = Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = _border.width
-          ..color = _border.color ?? Colors.grey;
-        for (var item in _children) {
-          context.canvas.drawRect((item.parentData as HTableRenderData)._darwRect.shift(offset), paint);
-        }
-        context.canvas.drawRect(offset & size, paint);
-      }
-    } catch (e) {}
   }
 
   void _computeColumnWidths(BoxConstraints constraints) {
@@ -225,6 +235,35 @@ class HTableRender extends RenderBox {
   }
 
   @override
+  void performLayout() {
+    _computeColumnWidths(constraints);
+    if (_children != null) {
+      for (var item in _children) {
+        var data = (item.parentData as HTableRenderData);
+        data._darwRect = Rect.fromLTWH(
+          _getWidth(0, data.x),
+          _getHeight(0, data.y),
+          _getWidth(data.x, data.colspan),
+          _getHeight(data.y, data.rowspan),
+        );
+
+        data.offset = data._darwRect.topLeft;
+
+        item.layout(
+          BoxConstraints.tightFor(
+            width: data._darwRect.width,
+            height: data._darwRect.height,
+          ),
+          parentUsesSize: true,
+        );
+      }
+      size = constraints.biggest;
+    } else {
+      performResize();
+    }
+  }
+
+  @override
   bool hitTestChildren(BoxHitTestResult result, {Offset position}) {
     for (int index = _children.length - 1; index >= 0; index -= 1) {
       final child = _children[index];
@@ -244,5 +283,121 @@ class HTableRender extends RenderBox {
     return false;
   }
 
-  void setChild(int x, int y, param2) {}
+  @override
+  void applyPaintTransform(RenderObject child, Matrix4 transform) {}
+
+  //////////////////////////////////////////////////////////////////////////////////
+  List<RenderBox> _children = [];
+
+  void insertChild(RenderBox value) {
+    if (null != value) {
+      _children.add(value);
+      adoptChild(value);
+    }
+  }
+
+  void removeChild(RenderBox value) {
+    if (null != value) {
+      _children.remove(value);
+      dropChild(value);
+    }
+  }
+
+  @override
+  void attach(PipelineOwner owner) {
+    super.attach(owner);
+    for (var child in _children) {
+      if (child != null) child.attach(owner);
+    }
+  }
+
+  @override
+  void detach() {
+    super.detach();
+    for (var _child in _children) {
+      if (_child != null) _child.detach();
+    }
+
+    markNeedsPaint();
+  }
+
+  @override
+  void redepthChildren() {
+    for (var child in _children) {
+      if (child != null) redepthChild(child);
+    }
+  }
+
+  @override
+  void visitChildren(RenderObjectVisitor visitor) {
+    for (var child in _children) {
+      if (child != null) visitor(child);
+    }
+  }
+
+  @override
+  List<DiagnosticsNode> debugDescribeChildren() {
+    return _children.map((e) => e.toDiagnosticsNode(name: 'child'))?.toList() ?? <DiagnosticsNode>[];
+  }
+
+  bool debugValidateChild(RenderObject child) {
+    assert(() {
+      if (child is! RenderBox) {
+        throw FlutterError.fromParts(<DiagnosticsNode>[
+          ErrorSummary('A $runtimeType expected a child of type RenderBox but received a '
+              'child of type ${child.runtimeType}.'),
+          ErrorDescription(
+            'RenderObjects expect specific types of children because they '
+            'coordinate with their children during layout and paint. For '
+            'example, a RenderSliver cannot be the child of a RenderBox because '
+            'a RenderSliver does not understand the RenderBox layout protocol.',
+          ),
+          ErrorSpacer(),
+          DiagnosticsProperty<dynamic>(
+            'The $runtimeType that expected a RenderBox child was created by',
+            debugCreator,
+            style: DiagnosticsTreeStyle.errorProperty,
+          ),
+          ErrorSpacer(),
+          DiagnosticsProperty<dynamic>(
+            'The ${child.runtimeType} that did not match the expected child type '
+            'was created by',
+            child.debugCreator,
+            style: DiagnosticsTreeStyle.errorProperty,
+          ),
+        ]);
+      }
+      return true;
+    }());
+    return true;
+  }
+}
+
+class RenderHTableCellBox extends RenderProxyBox {
+  final int rowspan;
+  final int colspan;
+  final int x;
+  final int y;
+
+  RenderHTableCellBox({
+    this.rowspan,
+    this.colspan,
+    this.x,
+    this.y,
+  }) {
+    parentData = HTableRenderData(
+      rowspan: rowspan,
+      colspan: colspan,
+      x: x,
+      y: y,
+    );
+  }
+
+  @override
+  bool hitTestSelf(Offset position) {
+    return child.hitTestSelf(position);
+  }
+
+  @override
+  bool get sizedByParent => child.sizedByParent;
 }

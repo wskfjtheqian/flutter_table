@@ -35,12 +35,37 @@ class _MyHomePageState extends State<MyHomePage> {
         padding: EdgeInsets.all(20.0),
         child: Column(
           children: <Widget>[
-            Expanded(
+            _build(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  _build(BuildContext context) {
+    return Table(
+      children: [
+        TableRow(children: [
+          InkWell(
+            child: Text("data"),
+            onTap: _onTap,
+          )
+        ])
+      ],
+    );
+  }
+
+  void _onTap() {
+    showModalBottomSheet(
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(builder: (context,state){
+            return Material(
               child: HTable(
-                border: BorderSide(color: Color(0xff808080), width: 0.3),
-                columnWidths: {
-                  0: HFixedColumnWidth(50),
-                },
+//              border: BorderSide(color: Color(0xff808080), width: 0.3),
+//              columnWidths: {
+//                0: HFixedColumnWidth(50),
+//              },
                 rowCount: 3,
                 colCount: 3,
                 children: [
@@ -77,7 +102,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               child: Text("${_aaa}"),
                             ),
                             onTap: () {
-                              setState(() {
+                              state(() {
                                 _aaa++;
                               });
                             },
@@ -88,28 +113,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ],
               ),
-            ),
-            _build(context),
-          ],
-        ),
-      ),
-    );
-  }
-
-  _build(BuildContext context) {
-    return Table(
-      children: [
-        TableRow(children: [
-          InkWell(
-            child: Text("data"),
-            onTap: () {
-              setState(() {
-                _aaa++;
-              });
-            },
-          )
-        ])
-      ],
-    );
+            );
+          });
+        });
   }
 }
